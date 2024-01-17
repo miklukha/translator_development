@@ -1,6 +1,6 @@
 # Таблиця лексем мови
-tableOfLanguageTokens = {'true': 'boolval',
-                         'false': 'boolval',
+tableOfLanguageTokens = {'true': 'boolean',
+                         'false': 'boolean',
 												 'program':'keyword', 
 												 'let':'keyword',
 												 'begin':'keyword',
@@ -31,7 +31,7 @@ tableOfLanguageTokens = {'true': 'boolval',
 												 ';':'punct', '_':'punct'}
 
 # Решту токенів визначаємо не за лексемою, а за заключним станом
-tableIdentFloatInt = {11:'ident', 23:'float', 24:'int'}
+tableIdentFloatInt = {11:'ident', 23:'real', 24:'integer'}
 
 # Діаграма станів
 
@@ -104,7 +104,7 @@ def processing():
 	if state==2:		# \n
 		numLine+=1
 		state=initState
-	if state in (11,23,24):	# keyword, ident, float, int
+	if state in (11,23,24):	# keyword, ident, real, int
 		token=getToken(state,lexeme) 
 		if token!='keyword': # не keyword
 			index=indexIdConst(state,lexeme)
