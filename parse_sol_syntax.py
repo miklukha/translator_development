@@ -8,7 +8,7 @@ print('-'*30)
 
 # номер рядка таблиці розбору/лексем/символів ПРОГРАМИ tableOfSymb
 numRow=1    
-tableOfLet={}
+
 # довжина таблиці символів програми 
 # він же - номер останнього запису
 len_tableOfSymb=len(tableOfSymb)
@@ -30,8 +30,7 @@ def parseProgram():
         parseToken('stop','keyword','')
 
         # повідомити про синтаксичну коректність програми
-        print('Parser: Синтаксичний та семантичний аналізи завершилися успішно')
-
+        print('Parser: Синтаксичний аналіз завершився успішно')
         return True
     except SystemExit as e:
         # Повідомити про факт виявлення помилки
@@ -103,26 +102,8 @@ def failParse(str,tuple):
         (numLine,lex,tok,expected)=tuple
         print('Parser ERROR: \n\t В рядку {0} неочікуваний елемент ({1},{2}). \n\t Очікувався - {3}.'.format(numLine,lex,tok,expected))
         exit(3)
-    elif str == 'невідомий тип':
-        (numLine,lex,tok,expected)=tuple
-        print('Parser ERROR: \n\t В рядку {0} неочікуваний елемент ({1},{2}). \n\t Очікувався - {3}.'.format(numLine,lex,tok,expected))
-        exit(4)
-    elif str == 'очікувався ідентифікатор':
-        (numLine,lex,tok,expected)=tuple
-        print('Parser ERROR: \n\t В рядку {0} неочікуваний елемент ({1},{2}). \n\t Очікувався - {3}.'.format(numLine,lex,tok,expected))
-        exit(5)
-    elif str == 'повторне оголошення змiнної':
-        (numLine,lex)=tuple
-        print('Parser ERROR: \n\t В рядку {0} повторне оголошення змінної {1}.'.format(numLine,lex))
-        exit(6)
-    elif str == 'пропуск знака декларації': 
-        (numLine,lex,tok,expected)=tuple
-        print('Parser ERROR: \n\t В рядку {0} неочікуваний елемент ({1}, {2}). \n\t Очікувався - знак декларації {3}.'.format(numLine,lex,tok,expected))
-        exit(7)
-    elif str == 'пропуск типу': 
-        (numLine,lex,tok,expected)=tuple
-        print('Parser ERROR: \n\t В рядку {0} неочікуваний елемент ({1}, {2}). \n\t Очікувався - тип змінної {3}.'.format(numLine,lex,tok,expected))
-        exit(8)
+
+
           
 # Функція для розбору за правилом для StatementList 
 # StatementList = Statement  { Statement }
@@ -276,7 +257,7 @@ def parseFactor():
     
     # перша і друга альтернативи для Factor
     # якщо лексема - це константа або ідентифікатор
-    if tok in ('int','float','ident', 'boolval'):
+    if tok in ('integer','real','ident', 'boolean'):
             numRow += 1
             print('\t'*4+'в рядку {0} - {1}'.format(numLine,(lex, tok)))
     
@@ -288,7 +269,7 @@ def parseFactor():
         parseToken(')','brackets_op','\t'*4)
         print('\t'*4+'В рядку {0} - {1}'.format(numLine,(lex, tok)))
     else:
-        failParse('невідповідність у Expression.Factor',(numLine,lex,tok,'rel_op, int, float, ident або \'(\' Expression \')\''))
+        failParse('невідповідність у Expression.Factor',(numLine,lex,tok,'rel_op, integer, real, ident або \'(\' Expression \')\''))
     return True
 
 # розбір інструкції розгалуження за правилом
@@ -335,26 +316,7 @@ def parseIdent(indent):
         print(indent+'В рядку {0} - {1}'.format(numLine, (lex, tok)))
         return True
     else:
-        failParse('очікувався ідентифікатор', (numLine, lex, tok, 'ident'))
-        return False
-    
-def parseDeclIdent(indent):
-    global numRow
-    # прочитаємо поточну лексему в таблиці розбору
-    numLine, lex, tok = getSymb()
-    # якщо токен - ідентифікатор
-    if tok == 'ident':
-        ind=tableOfLet.get(lex)
-        if ind is None:
-            ind=len(tableOfLet)+1
-            tableOfLet[lex]=(ind,lex,'undefined')
-        else: failParse('повторне оголошення змiнної', (numLine, lex))
-
-        numRow += 1
-        print(indent+'В рядку {0} - {1}'.format(numLine, (lex, tok)))
-        return True, lex
-    else:
-        failParse('очікувався ідентифікатор', (numLine, lex, tok, 'ident'))
+        failParse('невідповідність інструкцій', (numLine, lex, tok, 'ident'))
         return False
     
 def parseDeclSection():
@@ -374,26 +336,23 @@ def parseDeclaration():
         F = False
         return F
     
-    F = parseDeclIdent('\t')
+    F = parseIdent('\t')
 
     if F:
-        identifier = F[1]
         F = parseDeclSign()
         if F:
-            return parseType(identifier)
+            return parseType()
     return F
 
-def parseType(identifier):
+def parseType():
     global numRow
     numLine, lex, tok = getSymb()
     if tok == 'keyword' and lex in ('real', 'integer', 'boolean'):
-        tableOfLet[identifier] = tableOfLet[identifier] + (lex,)
         numRow += 1
         print('\t' + 'В рядку {0} - {1}'.format(numLine, (lex, tok)))
         return True
     else:
-        tableOfLet[identifier] = tableOfLet[identifier] + ('undeclared_variable',)
-        failParse('пропуск типу', (numLine, lex, tok, 'keyword'))
+        failParse('невідповідність інструкцій', (numLine, lex, tok, 'keyword'))
         return False
 
 def parseDeclSign():
@@ -403,7 +362,7 @@ def parseDeclSign():
         numRow += 1
         print('\t' + 'В рядку {0} - {1}'.format(numLine, (lex, tok)))
     else:
-        failParse('пропуск знака декларації', (numLine, lex, tok, '->'))
+        failParse('невідповідність інструкцій', (numLine, lex, tok, 'keyword'))
         return False
     return True
 
