@@ -1,6 +1,4 @@
-from lex_sol import lex
-from lex_sol import tableOfSymb
-from lex_sol import tableOfLabel
+from lex_sol import lex, tableOfSymb, tableOfLabel
 
 lex()
 print('-'*30)
