@@ -1,14 +1,18 @@
 from lex_sol import lex
 from lex_sol import tableOfSymb
+from lex_sol import tableOfLabel
 
 lex()
 print('-'*30)
 # print('tableOfSymb:{0}'.format(tableOfSymb))
+# print('tableOfId:{0}'.format(tableOfId))
+
 # print('-'*30)
 
 # номер рядка таблиці розбору/лексем/символів ПРОГРАМИ tableOfSymb
 numRow=1    
 tableOfLet={}
+lexName = ''
 # довжина таблиці символів програми 
 # він же - номер останнього запису
 len_tableOfSymb=len(tableOfSymb)
@@ -138,12 +142,18 @@ def failParse(str,tuple):
     elif str == 'ділення на 0': 
         (numLine)=tuple
         print('Parser ERROR: \n\t В рядку {0} ділення на 0. \n\t Ділення на 0 заборонено.'.format(numLine))
-        exit(11)
+        exit(12)
     elif str == 'невідповідність у Boolean':
         (numLine,lex,tok,expected)=tuple
         print('Parser ERROR: \n\t В рядку {0} неочікуваний елемент ({1},{2}). \n\t Очікувався - {3}.'.format(numLine,lex,tok,expected))
-        exit(12)
+        exit(13)
+    elif str == 'відсутність мітки':
+        (numLine,lex)=tuple
+        print('Parser ERROR: \n\t В рядку {0} перехід {1} на мітку, що не існує.'.format(numLine,lex))
+        exit(14)
           
+
+
 # Функція для розбору за правилом для StatementList 
 # StatementList = Statement  { Statement }
 # викликає функцію parseStatement() доти,
@@ -198,8 +208,9 @@ def defineOperation():
     numLine, lex, tok = getSymb()
 
     lexeme = lex
-    if lex not in tableOfLet:
-        return failParse('неоголошена змiнна', (numLine, lex))
+    if lex not in tableOfLabel:
+        if lex not in tableOfLet:
+            return failParse('неоголошена змiнна', (numLine, lex))
 
     print('\t\t' + 'В рядку {0} - {1}'.format(numLine,(lex, tok)))
     numRow += 1
@@ -245,13 +256,21 @@ def parseAssign(lexeme):
     else: return False    
 
 def getTypeOp(lType, op, rType):
+    if lType == 'ident':
+        lType = tableOfLet[lexName][2]
+
+    if rType == 'ident':
+        rType = tableOfLet[lexName][2]
+
     typesArithm = lType in ('integer','real') and \
     rType in ('integer','real')
 
     if not typesArithm:
         resType = 'type_error'
 
-    if lType == 'integer' and rType == 'integer' \
+    if op in ('<','<=','>','>=','==','!='):
+        resType = 'boolean'
+    elif lType == 'integer' and rType == 'integer' \
         and op in '+-*':
         resType = 'integer'   
     elif lType == 'real' or rType == 'real' \
@@ -259,8 +278,6 @@ def getTypeOp(lType, op, rType):
         resType = 'real'
     elif op in '/^':
         resType = 'real'
-    elif op in ('<','<=','>','>=','==','!='):
-        resType = 'boolean'
     else: resType = 'type_error'
 
     return resType
@@ -289,7 +306,7 @@ def parseExpression():
             resType = getTypeOp(lType, lex, rType)
 
             if resType == 'type_error':
-                failParse('помилка типів',(numLine, (lex, tok)))
+                failParse('помилка типів',(numLine, lex, tok))
             print('\t\t\t\tОчікуваний тип результату виразу: ', resType)
         else:
             F = False
@@ -348,16 +365,19 @@ def parsePower():
 
 
 def parseFactor():
-    global numRow
+    global numRow, lexName
     numLine, lex, tok = getSymb()
     print('\t'*4+'parseFactor(): В рядку: {0}\t (lex, tok):{1}'.format(numLine,(lex, tok)))
-    
+
     # перша і друга альтернативи для Factor
     # якщо лексема - це константа або ідентифікатор
-    if tok in ('integer','real','ident', 'boolean'):
-            numRow += 1
-            print('\t'*4+'в рядку {0} - {1}'.format(numLine,(lex, tok)))
-            resType = tok
+    if tok in ('integer','real','ident', 'boolean'):    
+        if tok == 'ident':
+            lexName = lex
+
+        numRow += 1
+        print('\t'*4+'в рядку {0} - {1}'.format(numLine,(lex, tok)))
+        resType = tok
     
     # третя альтернатива для Factor
     # якщо лексема - це відкриваюча дужка
@@ -381,7 +401,7 @@ def parseIf():
         numRow += 1
         parseBoolExpr()
         parseToken('goto','keyword','\t'*4)
-        parseIdent('\t'*4)
+        parseLabelIdent('\t'*4)
         return True
     else: return False
 
@@ -441,7 +461,24 @@ def parseDeclIdent(indent):
     else:
         failParse('очікувався ідентифікатор', (numLine, lex, tok, 'ident'))
         return False
-    
+
+def parseLabelIdent(indent):
+    global numRow
+    # прочитаємо поточну лексему в таблиці розбору
+    numLine, lex, tok = getSymb()
+    # якщо токен - ідентифікатор
+    if lex not in tableOfLabel:
+        failParse('відсутність мітки', (numLine, lex))
+        return False
+
+    if tok == 'ident':
+        numRow += 1
+        print(indent+'В рядку {0} - {1}'.format(numLine, (lex, tok)))
+        return True
+    else:
+        failParse('очікувався ідентифікатор', (numLine, lex, tok, 'ident'))
+        return False
+
 def parseDeclSection():
     print('parseDeclSection:')
     parseToken('let', 'keyword', '\t')
