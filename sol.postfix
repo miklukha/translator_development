@@ -1,0 +1,137 @@
+.target: Postfix Machine
+.version: 0.2
+
+
+.vars(
+    counter    integer
+    result     real
+    flag       boolean
+    i          integer
+)
+
+
+.labels(
+    count      61
+    print      76
+    positive_label 80
+    negative_label 85
+    zero_label 90
+    no_zero_label 95
+    m7         15
+    m8         33
+    m9         24
+    m10        39
+)
+
+
+.constants(
+    0          integer
+    1          integer
+    2          integer
+    10         integer
+    3          integer
+)
+
+
+.code(
+    counter    r-val
+    IN         inp_op
+    counter    r-val
+    0          integer
+    >=         rel_op
+    count      label
+    JT         jt
+    counter    r-val
+    0          integer
+    <=         rel_op
+    print      label
+    JT         jt
+    i          l-val
+    1          integer
+    =          assign_op
+    m7         label
+    :          colon
+    i          r-val
+    2          integer
+    TO         to
+    m10        label
+    JF         jf
+    m8         label
+    JUMP       jump
+    m9         label
+    :          colon
+    i          l-val
+    i          r-val
+    1          integer
+    OP         operator
+    =          assign_op
+    m7         label
+    JUMP       jump
+    m8         label
+    :          colon
+    result     r-val
+    OUT        out_op
+    m9         label
+    JUMP       jump
+    m10        label
+    :          colon
+    result     r-val
+    0          integer
+    >          rel_op
+    positive_label label
+    JT         jt
+    result     r-val
+    0          integer
+    <          rel_op
+    negative_label label
+    JT         jt
+    result     r-val
+    0          integer
+    ==         rel_op
+    zero_label label
+    JT         jt
+    result     r-val
+    0          integer
+    !=         rel_op
+    no_zero_label label
+    JT         jt
+    count      label
+    :          colon
+    result     l-val
+    counter    r-val
+    10         integer
+    *          mult_op
+    3          integer
+    /          mult_op
+    3          integer
+    2          integer
+    ^          ex_op
+    -          add_op
+    2          integer
+    +          add_op
+    =          assign_op
+    print      label
+    :          colon
+    counter    r-val
+    OUT        out_op
+    positive_label label
+    :          colon
+    flag       l-val
+    true       boolean
+    =          assign_op
+    negative_label label
+    :          colon
+    flag       l-val
+    false      boolean
+    =          assign_op
+    zero_label label
+    :          colon
+    flag       l-val
+    false      boolean
+    =          assign_op
+    no_zero_label label
+    :          colon
+    flag       l-val
+    true       boolean
+    =          assign_op
+)
