@@ -61,7 +61,7 @@ Ferror={101,102,103}# обробка помилок
 tableOfId={}   # Таблиця ідентифікаторів
 tableOfConst={} # Таблиць констант
 tableOfSymb={}  # Таблиця символів програми (таблиця розбору)
-
+tableOfLabel={} # Таблиця міток програми 
 
 state=initState # поточний стан
 
@@ -72,7 +72,7 @@ f.close()
 # FSuccess - ознака успішності розбору
 FSuccess = (True,'Lexer')
 
-lenCode=len(sourceCode)-1 # номер останнього символа у файлі з кодом програми
+lenCode=len(sourceCode) - 1 # номер останнього символа у файлі з кодом програми
 numLine=1 # лексичний аналіз починаємо з першого рядка
 numChar=-1 # з першого символа (в Python'і нумерація - з 0)
 char='' # ще не брали жодного символа
@@ -92,6 +92,7 @@ def lex():
 					# break					#      то припинити подальшу обробку 
 			elif state==initState:lexeme=''	# якщо стан НЕ заключний, а стартовий - нова лексема
 			else: lexeme+=char		# якщо стан НЕ закл. і не стартовий - додати символ до лексеми
+		tableOfSymb[len(tableOfSymb)+1] = (numLine,'stop','keyword','')
 		print('Lexer: Лексичний аналіз завершено успішно')
 	except SystemExit as e:
 		# Встановити ознаку неуспішності
@@ -100,32 +101,48 @@ def lex():
 		print('Lexer: Аварійне завершення програми з кодом {0}'.format(e))
 
 def processing():
-	global state,lexeme,char,numLine,numChar, tableOfSymb
-	if state==2:		# \n
-		numLine+=1
-		state=initState
+	global state,lexeme,char,numLine,numChar,tableOfSymb
+	if state == 2:  # \n
+		numLine += 1
+		state = initState
 	if state in (11,23,24):	# keyword, ident, real, int
 		token=getToken(state,lexeme) 
 		if token!='keyword': # не keyword
 			index=indexIdConst(state,lexeme)
-			print('{0:<3d} {1:<10s} {2:<10s} {3:<2d} '.format(numLine,lexeme,token,index))
+
+			print('{0:<3} {1:<16} {2:<12} {3:<2} '.format(numLine,lexeme,token,index))
 			tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,index)
 		else: # якщо keyword
-			print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token)) #print(numLine,lexeme,token)
+			print('{0:<3d} {1:<16s} {2:<12s} '.format(numLine,lexeme,token)) #print(numLine,lexeme,token)
 			tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
 		lexeme=''
 		numChar=putCharBack(numChar) # зірочка
 		state=initState
-	if state in (1, 31, 41, 51, 61, 71): # char != == <= >= ->
+	if state == 1: # char
 		lexeme += char
 		token = getToken(state, lexeme)
-		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine, lexeme, token))
+		print('{0:<3d} {1:<16s} {2:<12s} '.format(numLine, lexeme, token))
+		tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme, token, '')
+
+		if lexeme == ':':
+			i = len(tableOfSymb) - 1
+			tableOfLabel[tableOfSymb[i][1]] = numLine
+			name = tableOfSymb[i][1]
+			if name in tableOfId:
+				del tableOfId[name]
+
+		lexeme = ''
+		state = initState
+	if state in (31, 41, 51, 61, 71): # char != == <= >= ->
+		lexeme += char
+		token = getToken(state, lexeme)
+		print('{0:<3d} {1:<16s} {2:<12s} '.format(numLine, lexeme, token))
 		tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme, token, '')
 		lexeme = ''
 		state = initState
 	if state in (42, 52, 62, 72): # = < > -
 		token = getToken(state, lexeme)
-		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine, lexeme, token))
+		print('{0:<3d} {1:<16s} {2:<12s} '.format(numLine, lexeme, token))
 		tableOfSymb[len(tableOfSymb) + 1] = (numLine, lexeme, token, '')
 		lexeme = ''
 		numChar = putCharBack(numChar)  # зірочка
@@ -182,6 +199,7 @@ def classOfChar(char):
 		res="nl"
 	elif char in "+-=*/()^:;,!<>" :
 		res=char
+	
 	else: res='символ не належить алфавіту'
 	return res
 
@@ -199,16 +217,21 @@ def indexIdConst(state,lexeme):
 		if indx is None:
 			indx=len(tableOfId)+1
 			tableOfId[lexeme]=indx
+			
+		if lexeme in tableOfLabel:
+			del tableOfId[lexeme]
 	if state==23:
 		indx=tableOfConst.get(lexeme)
 		if indx is None:
 			indx=len(tableOfConst)+1
-			tableOfConst[lexeme]=indx
+			constType = 'real'
+			tableOfConst[lexeme]= constType
 	if state==24:
 		indx=tableOfConst.get(lexeme)
 		if indx is None:
 			indx=len(tableOfConst)+1
-			tableOfConst[lexeme]=indx
+			constType = 'integer'
+			tableOfConst[lexeme]=constType
 	return indx
 
 
@@ -220,4 +243,6 @@ print('-'*30)
 # print('tableOfSymb:{0}'.format(tableOfSymb))
 print('tableOfId:{0}'.format(tableOfId))
 print('tableOfConst:{0}'.format(tableOfConst))
+print('tableOfLabel:{0}'.format(tableOfLabel))
 
+print(tableOfSymb)

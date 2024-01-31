@@ -142,6 +142,9 @@ def parseStatement():
     elif (lex, tok) == ('for','keyword'):
         parseFor()
         return True 
+    
+    elif (lex, tok) == ('end','keyword'):
+        return False
     # тут - ознака того, що всі інструкції були коректно 
     # розібрані і була знайдена остання лексема програми.
     # тому parseStatement() має завершити роботу
@@ -159,6 +162,7 @@ def defineOperation():
     numLine, lex, tok = getSymb()
 
     print('\t\t' + 'В рядку {0} - {1}'.format(numLine,(lex, tok)))
+
     numRow += 1
 
     numLine, lex, tok = getSymb()
@@ -411,7 +415,7 @@ def parseFor():
         numRow += 1
         parseStatement()
         parseToken('to', 'keyword', '\t'*4)
-        parseExpression()
+        parseFactor()
         parseToken('do', 'keyword', '\t'*4)
         parseStatement()
         parseToken('end', 'keyword', '\t'*4)

@@ -1,0 +1,101 @@
+program my_program 
+let
+    counter -> integer;
+    result -> real;
+    flag -> boolean;
+    i -> integer;
+begin
+    prompt(counter)
+    if counter >= 0 goto count
+    if counter <= 0 goto print
+    for i = 1 to 2 do
+      log(result)
+    end
+    if result > 0 goto positive_label
+    if result < 0 goto negative_label
+    if result == 0 goto zero_label
+    if result != 0 goto no_zero_label
+
+count:
+    result = counter * 10 / 3 - 3 ^ 2 + 2
+print:
+    log(counter)
+positive_label:
+    flag = true
+negative_label:
+    flag = false
+zero_label:
+    flag = false
+no_zero_label:
+    flag = true
+    
+finish
+stop
+
+
+program my_program
+let
+    counter -> integer;
+    result -> real;
+    flag -> boolean;
+    l -> integer;
+begin
+    counter = 5
+    if counter < 2 goto count
+    result = 2.0 ^ 2.0 ^ 3.0
+
+  count:
+    l = 123
+finish
+stop
+
+
+.target: Postfix Machine
+.version: 0.2
+
+
+.vars(
+    counter    integer
+    result     real
+    flag       boolean
+    l          integer
+)
+
+
+.labels(
+    count      15
+)
+
+
+.constants(
+    1          integer
+    2.0        real
+    3.0        real
+    0.0        real
+)
+
+
+.code(
+    counter    l-val
+    5          integer
+    =          assign_op
+    counter    r-val
+    2          integer
+    <          rel_op
+    count      label
+    JT         jt
+    result     l-val
+    2.0        real
+    2.0        real
+    3.0        real
+    ^          ex_op
+    ^          ex_op
+    =          assign_op
+    count      label
+    :          colon
+    l          l-val
+    123        integer
+    =          assign_op
+)
+
+

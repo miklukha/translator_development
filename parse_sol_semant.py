@@ -163,14 +163,14 @@ def parseStatementList():
         return True
 
 
-def parseStatement():
+def parseStatement(isFor = False):
     print('\t\tparseStatement:')
     # прочитаємо поточну лексему в таблиці розбору
     numLine, lex, tok = getSymb()
     # якщо токен - ідентифікатор
 
     if tok == 'ident':
-        return defineOperation()
+        return defineOperation(isFor)
         
     # якщо лексема - ключове слово 'if'
     # обробити інструкцію розгалуження
@@ -194,14 +194,17 @@ def parseStatement():
     # тому parseStatement() має завершити роботу
     elif (lex, tok) == ('finish','keyword'):
             return False
-
+    
+    elif (lex, tok) == ('end','keyword'):
+            return False
+    
     else: 
         # жодна з інструкцій не відповідає 
         # поточній лексемі у таблиці розбору,
         failParse('невідповідність інструкцій',(numLine,lex,tok,'ident, prompt, for, finish, log, if'))
         return False
 
-def defineOperation():
+def defineOperation(isFor = False):
     global numRow
     numLine, lex, tok = getSymb()
 
@@ -209,6 +212,13 @@ def defineOperation():
     if lex not in tableOfLabel:
         if lex not in tableOfLet:
             return failParse('неоголошена змiнна', (numLine, lex))
+    
+    if isFor:
+        typeOfLet = tableOfLet[lex][2]
+        if typeOfLet == 'real':
+            print('Тип перемінної в циклі for має бути integer!')
+            return failParse('невідповідність типів', (numLine, typeOfLet, 'integer'))
+        
 
     print('\t\t' + 'В рядку {0} - {1}'.format(numLine,(lex, tok)))
     numRow += 1
@@ -362,7 +372,7 @@ def parsePower():
     return resType
 
 
-def parseFactor():
+def parseFactor(isFor = False):
     global numRow, lexName
     numLine, lex, tok = getSymb()
     print('\t'*4+'parseFactor(): В рядку: {0}\t (lex, tok):{1}'.format(numLine,(lex, tok)))
@@ -372,6 +382,12 @@ def parseFactor():
     if tok in ('integer','real','ident', 'boolean'):    
         if tok == 'ident':
             lexName = lex
+        
+        if tok in ('integer', 'real'):
+            if isFor:
+                if tok == 'real':
+                    print("Значення константи після ключового слова 'to' має бути типу integer!")
+                    return failParse('невідповідність типів', (numLine, tok, 'integer'))
 
         numRow += 1
         print('\t'*4+'в рядку {0} - {1}'.format(numLine,(lex, tok)))
@@ -590,11 +606,11 @@ def parseFor():
     _, lex, tok = getSymb()
     if lex == 'for' and tok == 'keyword':
         numRow += 1
-        parseStatement()
+        parseStatement(True)
         parseToken('to', 'keyword', '\t'*4)
-        parseExpression()
+        parseFactor(True)
         parseToken('do', 'keyword', '\t'*4)
-        parseStatement()
+        parseStatementList()
         parseToken('end', 'keyword', '\t'*4)
         return True
     else: return False
